@@ -1,0 +1,5 @@
+
+## Trick or Deal
+
+Checksec:
+
