@@ -99,6 +99,15 @@ On top of this, since `SendAllAsync` is called not as a coroutine in `SendAllAsy
 
 Now it become obvious, since data is sent from the stack, which is always at the same address, there is a possibility of data overwriting. We can make use of `RecvAsync` to set the buffer size of the current `SendAsync` (by sending a N length string from `proxy.py`), and make `SendAsync` suspend so we can call `RecvAsync` again. We repeat this again, to queue at least 2 `SendAsync` into the `writes_` vector in the `io_context`, there after we drain the `writes_` vector twice (by receiving data from `proxy.py`, thereby making send free again), the first time to print garbage since `RecvAsync` would have cleared the flag in the stack, the second time to call `load_flag`, to load the flag into the stack and print out the flag (which coincides with `buffer2` in send `SendAllAsyncNewline`).
 
+
+The steps to exploit are as follows:
+1. Set a very low receive buffer for client
+2. Connect
+3. Send enough data so that server echos back and fills up our receive buffer
+4. Send 1 more tranche of data
+5. Receive all data from the client side.
+6. Get your flag
+
 ## Exploit Script
 
 ```
