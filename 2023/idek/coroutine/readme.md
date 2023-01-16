@@ -60,18 +60,24 @@ However, the same cannot be said for `SendAsync`. `SendAsync` has roughly the sa
 
 Note that `SendAsync` is being called differently from `client_loop`. It first calls `SendAllAsyncNewline` which does not seems like a coroutine (see point 4 above), but it calls `SendAllAsync` which is a coroutine. It also allocates a `buffer2` which is on the stack, copy the content from `RecvAsync` to `buffer2`, and pass `buffer2` to `SendAllAsync` then to `SendAsync`. `buffer2` becomes invalid once `SendAllAsyncNewline` finish execution.  
 
-What this means is that, `SendAsync` sends data from the stack and `RecvAsync` recv data to the heap (which is then copy to the stack in `SendAllAsyncNewLine`. Lets verify this is a debugger. 
+What this means is that, `SendAsync` sends data from the stack and `RecvAsync` recv data to the heap (which is then copy to the stack in `SendAllAsyncNewLine`. Lets verify this in a debugger.
+
+address starts with 0x7f -> stack, address starts with 0x56 -> heap
+
+#### Register Content at `RecvAsync` `await_ready`. RSI holds the address of the buffer.
 
 ![recvasync](https://user-images.githubusercontent.com/24536991/212626020-3dd3862f-45de-4d2b-a7dd-e4c293c1cb3c.png)
-Register Content at `RecvAsync` `await_ready`
+
+
+#### Register Content at `SendAllAsyncNewline`. RCX holds the address of the buffer.
 
 ![sendallasyncline](https://user-images.githubusercontent.com/24536991/212626299-9fbf0762-5939-4507-bd7e-5310f1435a98.png)
 
-Register Content at `SendAllAsyncNewline`
+
+#### Register Content at `SendAsync` `await_ready`. RSI holds the address of the buffer.
 
 ![sendasync](https://user-images.githubusercontent.com/24536991/212626320-64bbdc7c-d196-45b5-ae01-c6d21926f848.png)
 
-Register Content at `SendAsync` `await_ready`
 
 
 On top of this, since `SendAllAsync` is called not as a coroutine in `SendAllAsyncNewline`, `SendAllAsyncNewline` ends up calling the `await_ready` function of `SendAllAsync`. This means `SendAllAsyncNewLine` could return to `client_loop` before the `send` was completed, through suspending `SendAsync`. This allows the next `RecvAsync` to be processed before the previous `send` finishes, and multiple send could be on hold at the same time if the `proxy.py` receive buffer is full. In addition, the buffer for `SendAsync` becomes invalid since `SendAllAsyncNewline` would have finished execution.  
