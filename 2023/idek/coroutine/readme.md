@@ -20,6 +20,19 @@ In any case, here are the important points:
 ## Code analysis
 Thankfully, source code is given. I will cover only the important functions, so lets drive right into it.
 
+### proxy.py (client)
+
+`proxy.py` interacts with the main binary (server). This is our client script. The functionaility is simple:
+
+1. Connects to the binary 
+2. Set receive buffer size for client
+3. Set send buffer size for client
+4. Send data to server
+5. Receive data from server
+
+
+### main (Server)
+
 ![image](https://user-images.githubusercontent.com/24536991/212623718-11bfd200-9eac-41ef-8867-2fd8eaea41ca.png)
 
 The main function is responsible for setting up everything. It first creates the `io_context` struct on the stack then pass the `io_context` to `server` function.
