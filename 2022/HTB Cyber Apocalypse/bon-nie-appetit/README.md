@@ -24,13 +24,13 @@ This means that we can leak the `SIZE` of the next chunk via `show_order()`.
 
 The `edit_order()` function looks very suspicious. It actually uses `strlen()` to determine the number of bytes to read from the user and write into the chunk. This means that the length calculated in `new_order()` is not the same as in `edit_order()`. In fact, since there is no NULL byte added in when the order is created, the result from `strlen()` could be larger than the actual size of the user data in the chunk which could allow us to modify the size of the next chunk. This allows us to resize the next chunk to make it larger, free it which results in overlapping chunks. Since tcache is enabled, the freed chunk will end up in the tcache bin. We can craft out the following chunk in the heap by calling `new_order()`.
 
-offset| CHUNK   | chunk size
+|offset | CHUNK   | chunk size |
 
-0x00  | chunk A |   0x20
+|0x00  | chunk A |   0x20 |
 
-0x20  | chunk B |   0x20
+|0x20  | chunk B |   0x20 |
 
-0x40  | chunk C |   0x20
+|0x40  | chunk C |   0x20 |
 
 
 We use chunk A to overwrite the `SIZE` of chunk B to a larger value, for instance 0x80. 
